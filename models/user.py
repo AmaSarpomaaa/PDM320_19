@@ -1,3 +1,4 @@
+import datetime
 import psycopg2
 from db import get_db_connection  # Ensure db.py is in the same directory
 # AUTHOR : Christabel Osei
@@ -21,6 +22,7 @@ class User:
         
     @staticmethod
     def login():
+        print("Welcome to login. Please enter your crendentials")
         username = input("Enter username: ")
         password = input("Enter password: ")
 
@@ -36,26 +38,69 @@ class User:
             else:
                 print("Invalid credentials.")
                 
-    @staticmethod
-    def create_account():
-        username = input("Enter desired username: ")
-        password = input("Enter password: ")
+    @classmethod
+    def create_account(cls):
+        """Creates a new user"""
+        cls.conn = get_db_connection()
+        print("Welcome to Account Creation. Please enter your crendentials below")
+        print("Please enter first name:")
+        
 
-        if User.is_username_taken(username) != -1:
-            print("Username already taken.")
-            return
+        first_name = input("Please enter first name: ").strip()
+        last_name = input("Please enter last name: ").strip()
+        email = input("Please enter your email: ").strip()
+        platform = input("Please enter the gaming platform you own: ").strip()
 
-        new_user_id = User.increment_counter_user_id()
-        with User.conn.cursor() as cursor:
-            cursor.execute('INSERT INTO "users" ("userID", "username", "password") VALUES (%s, %s, %s)',
-                       (new_user_id, username, password))
-            User.conn.commit()
-            print("Account created successfully!")
+        while True:
+            username = input("Please enter a new username: ").strip()
+            if cls.is_username_taken(username) != -1:
+                print("Username already taken - please enter a different one.")
+            else:
+                break
+
+        while True:
+            password = input("Please enter a new password: ").strip()
+            if len(password) < 6:
+                print("Password must be at least 6 characters long.")
+            else:
+                break
+
+        current_time = datetime.datetime.now()
+
+        try:
+            with cls.conn.cursor() as cursor:
+                increment_user_id = cls.increment_counter_user_id()
+                cursor.execute("""
+                    INSERT INTO users (userID, username, email, password, first_name, last_name, platform, created_at, last_login)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL)
+                """, (increment_user_id, username, email, password, first_name, last_name, platform, current_time))
+                cls.conn.commit()
+                print("✅ Your account has been created! Please sign in to access other functionalities.")
+        except psycopg2.Error as e:
+            print(f"❌ Database error: {e}")
+            cls.conn.rollback()
 
 
 
     
-
+    @staticmethod
+    def print_begin_menu():
+        print("\nWelcome to the Video Game!")
+        print("Please sign in or create account with the folloeing commands: ")
+        print("1: Create Account")
+        print("0: Login")
+        print("9: Exit")
+        choice = input("Enter your choice: ")
+        if choice == "1":
+            User.create_account()
+        elif choice == "0":
+            User.login()
+        elif choice == "9":
+            print("Exiting application.")
+            exit()
+        else:
+            print("Invalid option. Try again.")
+            User.print_begin_menu()
 
 
 
