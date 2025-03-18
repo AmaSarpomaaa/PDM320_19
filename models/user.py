@@ -145,8 +145,12 @@ class User:
                 
             elif choice == "3":
                 print("Searching for videogames...")
+                cls.search_video_game()
+                
+            
             elif choice == "4":
                 print("Rating movies...")
+                cls.rate_video_game()
             elif choice == "5":
                 print("Following users...")
                 cls.follow_unfollow_menu()
@@ -309,7 +313,7 @@ class User:
             cursor.execute('SELECT "video_game_id" FROM "video_games" WHERE name = %s', (game_name,))
             result = cursor.fetchone()
             if not result:
-                print("⚠️ Game not found.")
+                print("Game not found.")
                 return
             game_id = result[0]
             while True:
